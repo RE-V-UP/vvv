@@ -8,10 +8,14 @@ import ChangeFontBackground from "./ChangeFontBackground";
 import ActionButton from "./ActionButton";
 import ImageInput from "./ImageInput";
 import { getToday } from "@/util/util";
+import { useStore } from "@/shared/store";
 
 const BasicEditor = () => {
   const [title, setTitle] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const { userInfo } = useStore();
+  const { uid } = userInfo;
 
   const date = getToday();
 
@@ -20,7 +24,7 @@ const BasicEditor = () => {
       boardTitle: title,
       content: editorRef.current?.innerHTML,
       date,
-      userId: "",
+      userId: uid,
       musicId: "",
       likeList: [],
     };

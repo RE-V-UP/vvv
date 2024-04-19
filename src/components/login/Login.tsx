@@ -61,6 +61,7 @@ const Login = () => {
       })
       return
     }
+
     if (!validateEmail.test(email)) {
       await Swal.fire({
         text: '올바른 이메일 형식이 아닙니다. 다시 작성해 주세요',
@@ -71,35 +72,31 @@ const Login = () => {
       })
       return
     }
-    try {
-      const signResult = await signIn('email-password-credential', {
-        email,
-        password,
-        redirect: false,
-      })
+    const signResult = await signIn('email-password-credential', {
+      email,
+      password,
+      redirect: false,
+    })
 
-      if (signResult && signResult.ok === true) {
-        await Swal.fire({
-          title: 'V-UP에 오신 걸 환영합니다!',
-          confirmButtonText: '확인',
-          confirmButtonColor: '#685BFF',
-          color: '#ffffff',
-          background: '#2B2B2B',
-        })
-        router.push('/')
-      }
-      if (signResult && signResult.error) {
-        await Swal.fire({
-          text: `${signResult.error}`,
-          confirmButtonText: '확인',
-          confirmButtonColor: '#685BFF',
-          color: '#ffffff',
-          background: '#2B2B2B',
-        })
-      }
-    } catch (error) {
-      console.error(error)
-      throw new Error('회원정보를 불러오지 못하고 있습니다.')
+    if (signResult && signResult.ok === true) {
+      await Swal.fire({
+        title: 'V-UP에 오신 걸 환영합니다!',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#685BFF',
+        color: '#ffffff',
+        background: '#2B2B2B',
+      })
+      router.push('/')
+    }
+
+    if (signResult && signResult.error) {
+      await Swal.fire({
+        text: `${signResult.error}`,
+        confirmButtonText: '확인',
+        confirmButtonColor: '#685BFF',
+        color: '#ffffff',
+        background: '#2B2B2B',
+      })
     }
   }
 
@@ -115,6 +112,7 @@ const Login = () => {
       })
       return
     }
+
     if (spendEmail) {
       const { error } = await findUserPassword(spendEmail)
       setSpendEmail('')

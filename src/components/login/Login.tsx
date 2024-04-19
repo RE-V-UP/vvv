@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useRef, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -29,6 +29,7 @@ const Login = () => {
   const { data: userSessionInfo, status } = useSession()
   const uid = userSessionInfo?.user?.uid as string
 
+  const [removeDouble, setRemoveDouble] = useState<boolean>(false)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [spendEmail, setSpendEmail] = useState<string>('')
   const [submitEmail, setSubmitEmail] = useState<boolean>(false)
@@ -50,8 +51,10 @@ const Login = () => {
 
   const onLoginHandler = async (e: FormEvent) => {
     e.preventDefault()
-
+    if (removeDouble) return
+    setRemoveDouble(true)
     if (blankPattern.test(password) == true) {
+      setRemoveDouble(false)
       await Swal.fire({
         title: '비밀번호에 공백은 사용할 수 없습니다.',
         confirmButtonText: '확인',
@@ -62,7 +65,9 @@ const Login = () => {
       return
     }
 
-    if (!validateEmail.test(email)) {
+    if (!validateEmail.test(email) && email.length > 0) {
+      setRemoveDouble(false)
+
       await Swal.fire({
         text: '올바른 이메일 형식이 아닙니다. 다시 작성해 주세요',
         confirmButtonText: '확인',
@@ -98,6 +103,7 @@ const Login = () => {
         background: '#2B2B2B',
       })
     }
+    setRemoveDouble(false)
   }
 
   const findPassword = async (e: FormEvent) => {
@@ -116,6 +122,17 @@ const Login = () => {
     if (spendEmail) {
       const { error } = await findUserPassword(spendEmail)
       setSpendEmail('')
+
+      if (!error) {
+        await Swal.fire({
+          text: '비밀번호를 복구하는 이메일을 보냈습니다!',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#685BFF',
+          color: '#ffffff',
+          background: '#2B2B2B',
+        })
+        return setSubmitEmail(true)
+      }
 
       if (error && error.status === 400) {
         const errorStatus = error.status
@@ -152,26 +169,18 @@ const Login = () => {
         })
         setSubmitEmail(true)
       }
-      if (!error) {
-        await Swal.fire({
-          text: '비밀번호를 복구하는 이메일을 보냈습니다!',
-          confirmButtonText: '확인',
-          confirmButtonColor: '#685BFF',
-          color: '#ffffff',
-          background: '#2B2B2B',
-        })
-        return setSubmitEmail(true)
-      }
     }
   }
 
-  if (uid) {
-    return router.replace('/')
-  }
+  useEffect(() => {
+    if (uid) {
+      return router.replace('/')
+    }
+  }, [uid])
 
   if (status === 'loading') {
     return (
-      <div className='h-screen w-[full] text-white '>
+      <div className='absolute h-screen w-[full] text-white '>
         <Image src={loadingBar} width={50} height={50} alt='로딩바' />
       </div>
     )

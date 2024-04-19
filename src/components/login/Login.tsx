@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useRef, useState } from 'react'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -19,13 +19,15 @@ import {
 import { ACTIVE_BUTTON_SHADOW } from './buttonCss'
 import findPwImg from '@/../public/images/findPassword.svg'
 import close from '@/../public/images/close-button.svg'
-import logo from '@/../public/images/brand-logo/logo.png'
+import loadingBar from '@/../public/images/loadingBar.gif'
 import Swal from 'sweetalert2'
+import { blankPattern, validateEmail } from '../join/value'
 
 const Login = () => {
   const router = useRouter()
-  const blankPattern = /[\s]/g
-  const { status } = useSession()
+  const refEmail = useRef<HTMLInputElement>(null)
+  const { data: userSessionInfo, status } = useSession()
+  const uid = userSessionInfo?.user?.uid as string
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [spendEmail, setSpendEmail] = useState<string>('')
@@ -34,13 +36,17 @@ const Login = () => {
 
   const { form: userlogin, onChange: onChangeHandler } = useInput(needLoginInfo)
   const { email, password } = userlogin
+  const sendPasswordText = submitEmail ? '전송완료!' : '전송'
 
   const openModal = (e: FormEvent) => {
     e.preventDefault()
     setIsModalOpen(true)
     setSubmitEmail(submitEmail)
   }
-  const closeModal = () => setIsModalOpen(false)
+  const closeModal = () => {
+    setSubmitEmail(false)
+    setIsModalOpen(false)
+  }
 
   const onLoginHandler = async (e: FormEvent) => {
     e.preventDefault()
@@ -55,7 +61,16 @@ const Login = () => {
       })
       return
     }
-
+    if (!validateEmail.test(email)) {
+      await Swal.fire({
+        text: '올바른 이메일 형식이 아닙니다. 다시 작성해 주세요',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#685BFF',
+        color: '#ffffff',
+        background: '#2B2B2B',
+      })
+      return
+    }
     try {
       const signResult = await signIn('email-password-credential', {
         email,
@@ -73,7 +88,6 @@ const Login = () => {
         })
         router.push('/')
       }
-
       if (signResult && signResult.error) {
         await Swal.fire({
           text: `${signResult.error}`,
@@ -84,7 +98,7 @@ const Login = () => {
         })
       }
     } catch (error) {
-      console.log(error)
+      console.error(error)
       throw new Error('회원정보를 불러오지 못하고 있습니다.')
     }
   }
@@ -101,48 +115,66 @@ const Login = () => {
       })
       return
     }
-
     if (spendEmail) {
-      const { data, error } = await findUserPassword(spendEmail)
+      const { error } = await findUserPassword(spendEmail)
       setSpendEmail('')
-      console.log(data)
-      console.log(error)
+
       if (error && error.status === 400) {
         const errorStatus = error.status
         if (errorStatus === 400) {
           await Swal.fire({
-            text: '유효하지 않은 이메일 입니다.',
+            text: '올바르지 않은 이메일 형식 입니다.',
             confirmButtonText: '확인',
             confirmButtonColor: '#685BFF',
             color: '#ffffff',
             background: '#2B2B2B',
           })
+          return
         }
-        // await Swal.fire({
-        //   title: '이미 이메일을 보냈습니다!',
-        //   confirmButtonText: '확인',
-        //   confirmButtonColor: '#685BFF',
-        //   color: '#ffffff',
-        //   background: '#2B2B2B',
-        // })
-        // console.log(data)
-        // await Swal.fire({
-        //   title: '비밀번호를 복구하는 이메일을 보냈습니다!',
-        //   confirmButtonText: '확인',
-        //   confirmButtonColor: '#685BFF',
-        //   color: '#ffffff',
-        //   background: '#2B2B2B',
-        // })
-        // setSubmitEmail(true)
+
+        if (errorStatus === 429) {
+          await Swal.fire({
+            text: '1분 뒤에 다시 시도해 주세요.',
+            confirmButtonText: '확인',
+            confirmButtonColor: '#685BFF',
+            color: '#ffffff',
+            background: '#2B2B2B',
+          })
+          return setSubmitEmail(false)
+        }
       }
-      setSubmitEmail(false)
+
+      if (error && error.status === 429) {
+        await Swal.fire({
+          text: '잠시 후 1분 뒤에 다시 시도해주세요!',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#685BFF',
+          color: '#ffffff',
+          background: '#2B2B2B',
+        })
+        setSubmitEmail(true)
+      }
+      if (!error) {
+        await Swal.fire({
+          text: '비밀번호를 복구하는 이메일을 보냈습니다!',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#685BFF',
+          color: '#ffffff',
+          background: '#2B2B2B',
+        })
+        return setSubmitEmail(true)
+      }
     }
+  }
+
+  if (uid) {
+    return router.replace('/')
   }
 
   if (status === 'loading') {
     return (
-      <div className='h-[full]  w-[full] bg-black text-white '>
-        로딩주우우웅
+      <div className='h-screen w-[full] text-white '>
+        <Image src={loadingBar} width={50} height={50} alt='로딩바' />
       </div>
     )
   }
@@ -154,7 +186,10 @@ const Login = () => {
       )}
       {isModalOpen && (
         <Modal closeModal={closeModal}>
-          <button onClick={closeModal} className='absolute right-0 top-0 m-3'>
+          <button
+            onClick={closeModal}
+            className='absolute right-[32px] top-[32px] m-3'
+          >
             <Image src={close} width={24} height={24} alt='닫기 아이콘' />
           </button>
           <div
@@ -163,26 +198,37 @@ const Login = () => {
             <h3 className='pt-[106px] text-[20px] font-bold'>
               <p>비밀번호&nbsp;찾기</p>
             </h3>
-            <div className=' flex flex-col gap-[32px]'>
-              <article className='gap-[4px]'>
-                <label className='text-[rgba(255,255,255,0.3)]'>
+            <div className=' flex flex-col gap-[28px]'>
+              <article>
+                <label className='flex flex-col gap-[4px] text-[rgba(255,255,255,0.3)]'>
                   <p>이메일</p>
+                  <input
+                    type='email'
+                    autoFocus
+                    ref={refEmail}
+                    onFocus={() => setSubmitEmail(false)}
+                    value={spendEmail}
+                    placeholder='가입 시 사용한 이메일을 입력하세요.'
+                    onChange={(e) => setSpendEmail(e.target.value)}
+                    className={`flex w-full items-center gap-4 rounded-[12px] border-2 border-white border-opacity-10 bg-white bg-opacity-10 px-[12px] py-[13px] font-bold caret-primary  ${INPUT_SHADOW} ${DROP_SHADOW} ${INPUT_FOCUS} placeholder:text-[rgba(255,255,255,0.3)]`}
+                  />
+                  <div className='mt-[4px]'>
+                    {!validateEmail.test(spendEmail) &&
+                    spendEmail?.length > 0 ? (
+                      <p className='w-[320px] text-primary'>
+                        올바른 이메일 형식이 아닙니다. @와 .을 포함하여 작성해
+                        주세요.
+                      </p>
+                    ) : null}
+                  </div>
                 </label>
-                <input
-                  type='email'
-                  autoFocus
-                  value={spendEmail}
-                  placeholder='가입 시 사용한 이메일을 입력하세요.'
-                  onChange={(e) => setSpendEmail(e.target.value)}
-                  className={`flex w-full items-center gap-4 rounded-[12px] border-2 border-white border-opacity-10 bg-white bg-opacity-10 px-[12px] py-[13px] font-bold caret-primary  ${INPUT_SHADOW} ${DROP_SHADOW} ${INPUT_FOCUS} placeholder:text-[rgba(255,255,255,0.3)]`}
-                />
               </article>
               <div>
                 <button
                   onClick={findPassword}
                   className={`flex h-[48px] w-[320px] items-center justify-center rounded-[12px] bg-primary text-[16px] font-bold active:bg-[rgba(104,91,255,0.20)] ${DOWN_ACTIVE_BUTTON} ${ACTIVE_BUTTON_SHADOW} `}
                 >
-                  {submitEmail ? '전송완료!' : '전송'}
+                  {sendPasswordText}
                 </button>
               </div>
             </div>
@@ -207,7 +253,7 @@ const Login = () => {
                     <p>이메일</p>
                     <input
                       autoFocus
-                      type='email'
+                      type='text'
                       name='email'
                       value={email}
                       onChange={onChangeHandler}

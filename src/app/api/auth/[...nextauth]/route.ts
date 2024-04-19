@@ -47,12 +47,13 @@ const handler = NextAuth({
             throw new Error('존재하지 않는 유저입니다. 회원가입을 해주세요.')
           }
         }
+
         if (data && credentials && data?.password !== password) {
           throw new Error('비밀번호가 다릅니다.')
         }
 
         if (!data) {
-          throw new Error('해당 이메일이 없습니다.')
+          throw new Error('존재하지 않는 이메일입니다.')
         }
 
         const spendSessionUserInfo = {

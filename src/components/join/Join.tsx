@@ -19,6 +19,7 @@ import { ACTIVE_BUTTON_SHADOW } from '../login/buttonCss'
 import AllowUserInfo from './AllowUserInfo'
 import useInput from '@/hooks/useInput'
 import Swal from 'sweetalert2'
+import { blankPattern, validateDetailPw, validateEmail } from './value'
 
 const Join = () => {
   const refPassword = useRef<HTMLInputElement>(null)
@@ -39,9 +40,6 @@ const Join = () => {
 
   const { userEmail, userPw, userPwCheck, userNickname, checkAgree } = join
 
-  const blankPattern = /[\s]/g
-  const validateEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const validateDetailPw = /^(?=.*?[a-z])(?=.*?[0-9]).{6,}$/
   const validateCheckAgree = checkAgree
   const validatePassword = !(userPw === userPwCheck)
   const validateEmptyValue = !(userEmail || userPwCheck || userNickname)

@@ -36,8 +36,8 @@ export const saveSignUpInUserInfo = async ({
   if (error) {
     console.error(error)
     if (error.code == '23505') {
-      alert('이미 있는 이메일입니다.')
-      throw new Error('이미 있는 이메일입니다.')
+      alert('이미 존재하는 이메일입니다.')
+      throw new Error('이미 존재하는 이메일입니다.')
     }
   }
   return data

@@ -56,7 +56,6 @@ export const updateUserPassword = async (newPassword: string) => {
   })
 
   if (error) {
-    console.log(error)
     if (error.code == '23505') {
       alert('이미 존재하는 이메일입니다.')
       throw new Error('이미 존재하는 이메일입니다.')
@@ -64,7 +63,6 @@ export const updateUserPassword = async (newPassword: string) => {
   }
 
   if (!error) {
-    console.log(error)
     throw new Error('비밀번호를 다시 입력해주세요!')
   }
 

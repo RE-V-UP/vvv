@@ -143,7 +143,6 @@ const Join = () => {
         data?.user?.identities?.length === 0 ||
         (error && error.status === 422)
       ) {
-        console.log(error)
         await Swal.fire({
           text: '이미 존재하는 이메일입니다.',
           confirmButtonText: '확인',

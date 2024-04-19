@@ -4,6 +4,7 @@ import KakaoProvider from 'next-auth/providers/kakao'
 import GoogleProvider from 'next-auth/providers/google'
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import Swal from 'sweetalert2'
 
 const handler = NextAuth({
   providers: [
@@ -41,7 +42,10 @@ const handler = NextAuth({
           .single()
 
         if (error) {
-          throw new Error('에러가 났습니다.')
+          const emptyDBuser = error.code === 'PGRST116'
+          if (emptyDBuser) {
+            throw new Error('존재하지 않는 유저입니다. 회원가입을 해주세요.')
+          }
         }
         if (data && credentials && data?.password !== password) {
           throw new Error('비밀번호가 다릅니다.')

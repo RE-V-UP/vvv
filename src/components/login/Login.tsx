@@ -7,7 +7,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Modal from '@/util/Modal'
 import useInput from '@/hooks/useInput'
-import SocialLogin from '@/components/socialLogin/page'
 import { findUserPassword } from '@/shared/login/loginApi'
 import {
   DROP_SHADOW,
@@ -20,6 +19,8 @@ import {
 import { ACTIVE_BUTTON_SHADOW } from './buttonCss'
 import findPwImg from '@/../public/images/findPassword.svg'
 import close from '@/../public/images/close-button.svg'
+import logo from '@/../public/images/brand-logo/logo.png'
+import Swal from 'sweetalert2'
 
 const Login = () => {
   const router = useRouter()
@@ -45,7 +46,13 @@ const Login = () => {
     e.preventDefault()
 
     if (blankPattern.test(password) == true) {
-      alert('비밀번호에 공백은 사용할 수 없습니다.')
+      await Swal.fire({
+        title: '비밀번호에 공백은 사용할 수 없습니다.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#685BFF',
+        color: '#ffffff',
+        background: '#2B2B2B',
+      })
       return
     }
 
@@ -57,14 +64,27 @@ const Login = () => {
       })
 
       if (signResult && signResult.ok === true) {
-        alert(`V-UP에 오신 걸 환영합니다!`)
+        await Swal.fire({
+          title: 'V-UP에 오신 걸 환영합니다!',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#685BFF',
+          color: '#ffffff',
+          background: '#2B2B2B',
+        })
         router.push('/')
       }
 
       if (signResult && signResult.error) {
-        alert(signResult.error)
+        await Swal.fire({
+          text: `${signResult.error}`,
+          confirmButtonText: '확인',
+          confirmButtonColor: '#685BFF',
+          color: '#ffffff',
+          background: '#2B2B2B',
+        })
       }
     } catch (error) {
+      console.log(error)
       throw new Error('회원정보를 불러오지 못하고 있습니다.')
     }
   }
@@ -72,19 +92,48 @@ const Login = () => {
   const findPassword = async (e: FormEvent) => {
     e.preventDefault()
     if (!spendEmail) {
-      alert('이메일을 입력해주세요!')
+      await Swal.fire({
+        text: '이메일을 입력해주세요!',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#685BFF',
+        color: '#ffffff',
+        background: '#2B2B2B',
+      })
       return
     }
 
     if (spendEmail) {
-      const data = await findUserPassword(spendEmail)
+      const { data, error } = await findUserPassword(spendEmail)
       setSpendEmail('')
-
-      if (!data) {
-        alert('이미 이메일을 보냈습니다!')
-      } else {
-        alert('비밀번호를 복구하는 이메일을 보냈습니다!')
-        setSubmitEmail(true)
+      console.log(data)
+      console.log(error)
+      if (error && error.status === 400) {
+        const errorStatus = error.status
+        if (errorStatus === 400) {
+          await Swal.fire({
+            text: '유효하지 않은 이메일 입니다.',
+            confirmButtonText: '확인',
+            confirmButtonColor: '#685BFF',
+            color: '#ffffff',
+            background: '#2B2B2B',
+          })
+        }
+        // await Swal.fire({
+        //   title: '이미 이메일을 보냈습니다!',
+        //   confirmButtonText: '확인',
+        //   confirmButtonColor: '#685BFF',
+        //   color: '#ffffff',
+        //   background: '#2B2B2B',
+        // })
+        // console.log(data)
+        // await Swal.fire({
+        //   title: '비밀번호를 복구하는 이메일을 보냈습니다!',
+        //   confirmButtonText: '확인',
+        //   confirmButtonColor: '#685BFF',
+        //   color: '#ffffff',
+        //   background: '#2B2B2B',
+        // })
+        // setSubmitEmail(true)
       }
       setSubmitEmail(false)
     }

@@ -40,11 +40,11 @@ const Join = () => {
   const { userEmail, userPw, userPwCheck, userNickname, checkAgree } = join
 
   const blankPattern = /[\s]/g
+  const validateEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const validateDetailPw = /^(?=.*?[a-z])(?=.*?[0-9]).{6,}$/
   const validateCheckAgree = checkAgree
   const validatePassword = !(userPw === userPwCheck)
   const validateEmptyValue = !(userEmail || userPwCheck || userNickname)
-  const validateEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const validateDetailPw = /^(?=.*?[a-z])(?=.*?[0-9]).{6,}$/
 
   const onClickCheckboxHandler = () => {
     setJoin((prevForm) => ({ ...prevForm, checkAgree: !prevForm.checkAgree }))
